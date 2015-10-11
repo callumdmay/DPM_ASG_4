@@ -1,5 +1,6 @@
 package ev3Localization;
 
+import ev3Navigator.Navigator;
 import ev3Odometer.Odometer;
 import lejos.hardware.*;
 import lejos.hardware.ev3.LocalEV3;
@@ -15,10 +16,10 @@ public class Lab4 {
 	// Right motor connected to output D
 	// Ultrasonic sensor port connected to input S1
 	// Color sensor port connected to input S2
-	private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
+	private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("C"));
 	private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
 	private static final Port usPort = LocalEV3.get().getPort("S1");		
-	private static final Port colorPort = LocalEV3.get().getPort("S2");		
+	private static final Port colorPort = LocalEV3.get().getPort("S4");		
 
 	
 	public static final double WHEEL_RADIUS = 2.25;
@@ -55,8 +56,11 @@ public class Lab4 {
 		odometer.start();
 		LCDInfo lcd = new LCDInfo(odometer);
 		
+		//Create navigator
+		Navigator navigator = new Navigator(odometer, leftMotor, rightMotor, WHEEL_RADIUS, TRACK);
+		
 		// perform the ultrasonic localization
-		USLocalizer usl = new USLocalizer(odometer, usValue, usData, USLocalizer.LocalizationType.FALLING_EDGE);
+		USLocalizer usl = new USLocalizer(odometer, usValue, usData, USLocalizer.LocalizationType.RISING_EDGE, navigator);
 		usl.doLocalization();
 		
 		// perform the light sensor localization
