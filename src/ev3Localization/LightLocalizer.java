@@ -2,19 +2,20 @@ package ev3Localization;
 
 import ev3Navigator.Navigator;
 import ev3Odometer.Odometer;
+import lejos.hardware.Sound;
 import lejos.robotics.SampleProvider;
 
 public class LightLocalizer {
-	
+
 	public static int 		ROTATION_SPEED 		= 25;
 	private final int 		lineDetectionValue = 40;
 	private final double	light_SensorDistanceFromOrigin = 13.3;
-	
+
 	private Odometer 			odometer;
 	private SampleProvider 		colorSensor;
 	private float[] 			colorData;	
 	private Navigator 			navigator;
-	
+
 
 	public LightLocalizer(Odometer odo, Navigator navigator, SampleProvider colorSensor, float[] colorData) {
 		this.odometer = odo;
@@ -31,35 +32,37 @@ public class LightLocalizer {
 
 
 		double blackLineAngles[] = new double[4];
+
+		navigator.setFORWARD_SPEED(ROTATION_SPEED*2);
+		navigator.setROTATE_SPEED(ROTATION_SPEED*2);
+
 		navigator.travelTo(-5, -5);
 		navigator.turnTo(Math.PI/2);
 
 		for( int index = 0 ; index < blackLineAngles.length; index ++)
 		{
-			
 			//Capture the angle when we first encounter the black line
 			while(!blackLineDetected())
 				navigator.rotateCounterClockWise(ROTATION_SPEED);
-			
-			double angle1 = odometer.getTheta();
-			
-			//Capture the angle when we leave the black line
-			while(blackLineDetected())
-				navigator.rotateCounterClockWise(ROTATION_SPEED);
-			
-			double angle2 = odometer.getTheta();
-		
-			//Return the average of the two angles - when we first detect the black line, and when we stop detecting it
-			blackLineAngles[index]= calculateAngleAverage(angle1, angle2);
+
+			Sound.beep();
+			blackLineAngles[index]= odometer.getTheta();
+
+			//turn off of black line so as not to capture the same line twice
+			navigator.turnTo(odometer.getTheta() + 5*Math.PI/180,ROTATION_SPEED);
 		}
-		
+
 		double deltaY = blackLineAngles[2] - blackLineAngles[0];
 		double deltaX = blackLineAngles[3] - blackLineAngles[1];
 
-		
 		odometer.setX(-light_SensorDistanceFromOrigin * Math.cos(deltaY/2));
-
 		odometer.setY(-light_SensorDistanceFromOrigin * Math.cos(deltaX/2));
+
+		odometer.setTheta(odometer.getTheta() + blackLineAngles[0]+Math.toRadians(180) +deltaY/2);
+		navigator.travelTo(0, 0);
+
+		initiateFinalCalibration();
+
 	}
 
 	private boolean blackLineDetected()
@@ -72,7 +75,7 @@ public class LightLocalizer {
 		else 
 			return false;
 	}
-	
+
 	private double calculateAngleAverage(double angle1, double angle2)
 	{
 		double x = Math.abs(angle1 -angle2);
@@ -83,6 +86,30 @@ public class LightLocalizer {
 			return (((angle1 + angle2) / 2) + Math.PI) % (2 *Math.PI);
 
 		throw new ArithmeticException("Could not calculate angle average of numbers");
+
+	}
+
+	private void initiateFinalCalibration()
+	{
+		navigator.turnTo(0);
+		while(odometer.getTheta() <= Math.toRadians(20) && !blackLineDetected())
+			navigator.rotateCounterClockWise(ROTATION_SPEED);
+
+		if(blackLineDetected()){
+			Sound.beep();
+			odometer.setTheta(0);
+		}
+		else{
+			while(odometer.getTheta() >= -Math.toRadians(20) && !blackLineDetected())
+				navigator.rotateClockWise(ROTATION_SPEED);
+
+			if(blackLineDetected()){
+				Sound.beep();
+				odometer.setTheta(0);
+			}
+		}
+		navigator.stopMotors();
+		navigator.turnTo(0);
 
 	}
 
