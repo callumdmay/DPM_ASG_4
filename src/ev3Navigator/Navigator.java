@@ -29,8 +29,10 @@ public class Navigator extends Thread{
 	private final int FILTER_OUT = 5;
 	private int filterControl;
 
-	private final int FORWARD_SPEED = 250;
-	private final int ROTATE_SPEED = 150;
+
+
+	private int FORWARD_SPEED = 250;
+	private int ROTATE_SPEED = 150;
 
 	private Odometer odometer;
 	private UltrasonicPoller ultraSonicPoller;
@@ -119,7 +121,7 @@ public class Navigator extends Thread{
 		if(deltaTheta < -Math.PI)
 			rotationAngle = deltaTheta + 2*Math.PI;
 
-		if(deltaTheta > Math.PI)
+		if(deltaTheta > 2*Math.PI)
 			rotationAngle = deltaTheta - 2*Math.PI;
 
 
@@ -130,7 +132,29 @@ public class Navigator extends Thread{
 		rightMotor.rotate(NavigatorUtility.convertAngle(wheelRadius, axleLength, rotationAngle * 180/Math.PI), false);
 	}
 
+	public void turnTo(double pTheta, int speed)
+	{
 
+		double deltaTheta = pTheta - odometer.getTheta();
+
+		double rotationAngle = 0;
+
+		if( Math.abs(deltaTheta) <= Math.PI)
+			rotationAngle = deltaTheta;
+
+		if(deltaTheta < -Math.PI)
+			rotationAngle = deltaTheta + 2*Math.PI;
+
+		if(deltaTheta > Math.PI)
+			rotationAngle = deltaTheta - 2*Math.PI;
+
+
+		leftMotor.setSpeed(speed);
+		rightMotor.setSpeed(speed);
+
+		leftMotor.rotate(-NavigatorUtility.convertAngle(wheelRadius, axleLength, rotationAngle * 180/Math.PI), true);
+		rightMotor.rotate(NavigatorUtility.convertAngle(wheelRadius, axleLength, rotationAngle * 180/Math.PI), false);
+	}
 	//This method checks for obstacles in front of the robot as it is moving forward
 	private void checkForObstacles()
 	{
@@ -250,6 +274,11 @@ public class Navigator extends Thread{
 	}
 
 
+	public void stopMotors()
+	{
+		leftMotor.stop();
+		rightMotor.stop();
+	}
 	public void rotateClockWise(int speed)
 	{
 		leftMotor.setSpeed(speed);
@@ -270,9 +299,15 @@ public class Navigator extends Thread{
 
 	public boolean isNavigating() {
 		return isNavigating;
-
+	}
+	
+	public void setFORWARD_SPEED(int fORWARD_SPEED) {
+		FORWARD_SPEED = fORWARD_SPEED;
 	}
 
+	public void setROTATE_SPEED(int rOTATE_SPEED) {
+		ROTATE_SPEED = rOTATE_SPEED;
+	}
 
 }
 

@@ -1,5 +1,5 @@
 /*
- * Odometer.java
+s * Odometer.java
  */
 
 package ev3Odometer;
@@ -70,7 +70,7 @@ public class Odometer extends Thread {
 				theta += deltaT;
 				
 				//maintain the bounds of theta
-				if(theta < -2*Math.PI)
+				if(theta < 0)
 					theta += 2*Math.PI;
 				if(theta > 2*Math.PI)
 					theta -= 2*Math.PI;
