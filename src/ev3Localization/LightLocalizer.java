@@ -33,11 +33,8 @@ public class LightLocalizer {
 
 		double blackLineAngles[] = new double[4];
 
-		navigator.setFORWARD_SPEED(ROTATION_SPEED*2);
-		navigator.setROTATE_SPEED(ROTATION_SPEED*2);
-
 		navigator.travelTo(-5, -5);
-		navigator.turnTo(Math.PI/2);
+		navigator.turnTo(Math.PI/2, ROTATION_SPEED * 2);
 
 		for( int index = 0 ; index < blackLineAngles.length; index ++)
 		{
@@ -76,24 +73,13 @@ public class LightLocalizer {
 			return false;
 	}
 
-	private double calculateAngleAverage(double angle1, double angle2)
-	{
-		double x = Math.abs(angle1 -angle2);
 
-		if (x < Math.PI) 
-			return  ((angle1 + angle2) / 2) % (2 *Math.PI);
-		if (x != Math.PI)
-			return (((angle1 + angle2) / 2) + Math.PI) % (2 *Math.PI);
-
-		throw new ArithmeticException("Could not calculate angle average of numbers");
-
-	}
 
 	private void initiateFinalCalibration()
 	{
 		navigator.turnTo(0);
 		while(odometer.getTheta() <= Math.toRadians(20) && !blackLineDetected())
-			navigator.rotateCounterClockWise(ROTATION_SPEED);
+			navigator.rotateCounterClockWise(10);
 
 		if(blackLineDetected()){
 			Sound.beep();
@@ -101,7 +87,7 @@ public class LightLocalizer {
 		}
 		else{
 			while(odometer.getTheta() >= -Math.toRadians(20) && !blackLineDetected())
-				navigator.rotateClockWise(ROTATION_SPEED);
+				navigator.rotateClockWise(10);
 
 			if(blackLineDetected()){
 				Sound.beep();
