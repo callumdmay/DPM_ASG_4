@@ -72,7 +72,7 @@ public class USLocalizer {
 			angleB = latchFallingEdgeAngle(false);
 
 			Sound.beep();
-			
+
 
 		} else {
 
@@ -83,30 +83,19 @@ public class USLocalizer {
 			 * will face toward the wall for most of it.
 			 */
 
-
 			while(getFilteredData(5) >= measuredDistance - 10)
 				navigator.rotateCounterClockWise(ROTATION_SPEED+20);
-			/*
-			while(getFilteredData() <=measuredDistance)
-				navigator.rotateClockWise(ROTATION_SPEED-10);
 
-			angleA = odometer.getTheta();
-			 */
 			angleA = latchRisingEdgeAngle(true);
 			Sound.beep();
-			
+
 			//turn away from wall that we just captured angle from, so as not to 
 			//capture it again
 			navigator.turnTo(odometer.getTheta() + 30*Math.PI/180, ROTATION_SPEED);
 
 			while(getFilteredData(5) >= measuredDistance - 10)
 				navigator.rotateCounterClockWise(ROTATION_SPEED+20);
-			/*
-			while(getFilteredData() <=measuredDistance)
-				navigator.rotateCounterClockWise(ROTATION_SPEED-10);
 
-			angleB = odometer.getTheta();
-			 */
 			angleB = latchRisingEdgeAngle(false);
 			Sound.beep();
 
@@ -214,10 +203,10 @@ public class USLocalizer {
 		double angle1 = 45;
 		double angle2 = 225;
 		if(angleA <= angleB)
-			return Math.toRadians(angle1) - (angleA + angleB)/2 + Math.toRadians(90);
-		
+			return Math.toRadians(angle1) - (angleA + angleB)/2 + Math.toRadians(90) % Math.toRadians(360);
+
 		if(angleA > angleB)
-			return Math.toRadians(angle2)- (angleA + angleB)/2 + Math.toRadians(90);
+			return Math.toRadians(angle2)- (angleA + angleB)/2 + Math.toRadians(90) %Math.toRadians(360);
 
 		throw new ArithmeticException("Could not calculate odometer angle adjustment");
 
@@ -228,7 +217,7 @@ public class USLocalizer {
 		//face right wall and record y distance
 		navigator.turnTo(Math.toRadians(270));
 		odometer.setY(getFilteredData(11) - TILE_SIZE + us_SensorDistanceFromOrigin);
-		
+
 		//face back wall and record x distance
 		navigator.turnTo(Math.toRadians(180));
 		odometer.setX(getFilteredData(11) - TILE_SIZE + us_SensorDistanceFromOrigin);
@@ -251,6 +240,9 @@ public class USLocalizer {
 		return distance;
 	}
 
+	/*
+	 * Overload of getFilteredData that takes a sample size, then performs median filtering
+	 */
 	private float getFilteredData(int sampleSize){
 
 		float sampleData[] = new float[sampleSize];
