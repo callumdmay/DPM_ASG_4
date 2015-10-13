@@ -19,13 +19,15 @@ public class Navigator extends Thread{
 	private final double locationError = 1;
 	private final double navigatingAngleError = 1;
 
-	private int FORWARD_SPEED = 250;
-	private int ROTATE_SPEED = 150;
+	private final int FORWARD_SPEED = 250;
+	private final int ROTATE_SPEED = 150;
 
 	private Odometer odometer;
 
 	private NavigatorObstacleAvoider obstacleAvoider;
-
+	
+	private boolean isCheckingForObstacles;
+	
 	public static int coordinateCount = 0;
 	private static Queue<Coordinate> coordinates;
 
@@ -39,9 +41,11 @@ public class Navigator extends Thread{
 		neckMotor 					= pNeckMotor;
 		wheelRadius 				= pWheelRadius;
 		axleLength 					= pAxleLength;
-
+		
+		isCheckingForObstacles = true;
 		obstacleAvoider = new NavigatorObstacleAvoider(pOdometer, pUltraSonicPoller, pwallFollowerController, pLeftMotor, 
 				pRightMotor, pNeckMotor, pWheelRadius,pAxleLength );
+	
 	}
 
 	public Navigator(Odometer pOdometer, EV3LargeRegulatedMotor pLeftMotor, EV3LargeRegulatedMotor pRightMotor, double pWheelRadius, double pAxleLength)
@@ -52,6 +56,8 @@ public class Navigator extends Thread{
 		neckMotor 					= null;
 		wheelRadius 				= pWheelRadius;
 		axleLength 					= pAxleLength;
+		
+		isCheckingForObstacles = false;
 	}
 
 	@Override
@@ -61,14 +67,9 @@ public class Navigator extends Thread{
 
 		//For each coordinate in the queue, 
 		for( Coordinate coordinate : coordinates)
-		{
 			travelTo(coordinate.getX(), coordinate.getY());
-
-			//wait for robot to finish navigating too coordinate before moving to next one
-			while(obstacleAvoider.isNavigating() ||obstacleAvoider.isAvoiding()){}
-
-			coordinateCount++;
-		}
+		
+		
 		resetMotors();
 	}
 
@@ -76,21 +77,15 @@ public class Navigator extends Thread{
 	public void travelTo(double pX, double pY)
 	{
 
-		obstacleAvoider.setNavigating(true);
-
 		//While the robot is not at the objective coordinates, keep moving towards it 
 		while(Math.abs(pX- odometer.getX()) > locationError || Math.abs(pY - odometer.getY()) > locationError)
 		{
-			obstacleAvoider.checkForObstacles();
+			if(isCheckingForObstacles)
+				obstacleAvoider.checkForObstacles(pX, pY);
 
-			if(obstacleAvoider.isNavigating())
-				navigateToCoordinates(pX, pY);
+			navigateToCoordinates(pX, pY);
 
-			if(obstacleAvoider.isAvoiding())
-				obstacleAvoider.avoidObstacle(pX, pY);
 		}
-
-		obstacleAvoider.setNavigating(false);
 
 	}
 
@@ -159,7 +154,7 @@ public class Navigator extends Thread{
 		double newAngle = NavigatorUtility.calculateNewAngle(pX - currentX, pY - currentY);
 
 
-		if(Math.abs(NavigatorUtility.calculateShortestTurningAngle(newAngle, odometer.getTheta())*180/Math.PI)> navigatingAngleError)
+		if(Math.abs(  Math.toDegrees(NavigatorUtility.calculateShortestTurningAngle(newAngle, odometer.getTheta())))  > navigatingAngleError)
 			turnTo(newAngle);
 		else
 		{
@@ -184,20 +179,20 @@ public class Navigator extends Thread{
 			motor.setAcceleration(2000);
 		}
 
-		if(neckMotor == null)
+		if(neckMotor != null)
 		{		
 			neckMotor.stop();
 			neckMotor.setAcceleration(2000);
-			neckMotor.setSpeed(100);
+			neckMotor.setSpeed(50);
 		}
 	}
-
 
 	public void stopMotors()
 	{
 		leftMotor.stop();
 		rightMotor.stop();
 	}
+	
 	public void rotateClockWise(int speed)
 	{
 		leftMotor.setSpeed(speed);
@@ -216,13 +211,6 @@ public class Navigator extends Thread{
 		rightMotor.forward();
 	}
 
-	public void setFORWARD_SPEED(int fORWARD_SPEED) {
-		FORWARD_SPEED = fORWARD_SPEED;
-	}
-
-	public void setROTATE_SPEED(int rOTATE_SPEED) {
-		ROTATE_SPEED = rOTATE_SPEED;
-	}
 
 }
 
