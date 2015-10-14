@@ -2,6 +2,7 @@ package ev3Localization;
 
 
 
+import java.awt.Button;
 import java.util.Arrays;
 
 import ev3Navigator.Navigator;
@@ -84,20 +85,21 @@ public class USLocalizer {
 			 */
 
 			while(getFilteredData(5) >= measuredDistance - 10)
-				navigator.rotateCounterClockWise(ROTATION_SPEED+20);
+				navigator.rotateCounterClockWise(ROTATION_SPEED+10);
 
 			angleA = latchRisingEdgeAngle(true);
 			Sound.beep();
 
 			//turn away from wall that we just captured angle from, so as not to 
 			//capture it again
-			navigator.turnTo(odometer.getTheta() + 30*Math.PI/180, ROTATION_SPEED);
+			navigator.turnTo(odometer.getTheta() + Math.toRadians(45), ROTATION_SPEED);
 
 			while(getFilteredData(5) >= measuredDistance - 10)
-				navigator.rotateCounterClockWise(ROTATION_SPEED+20);
+				navigator.rotateCounterClockWise(ROTATION_SPEED);
 
 			angleB = latchRisingEdgeAngle(false);
 			Sound.beep();
+
 
 		}
 
@@ -124,7 +126,7 @@ public class USLocalizer {
 			fallingEdgeAngle1 = odometer.getTheta();
 
 			while(getFilteredData(5)> measuredDistance-distanceNoiseMargin)
-				navigator.rotateClockWise(ROTATION_SPEED-10);
+				navigator.rotateClockWise(ROTATION_SPEED);
 
 			fallingEdgeAngle2 = odometer.getTheta();
 
@@ -141,7 +143,7 @@ public class USLocalizer {
 			fallingEdgeAngle1 = odometer.getTheta();
 
 			while(getFilteredData(5)> measuredDistance-distanceNoiseMargin)
-				navigator.rotateCounterClockWise(ROTATION_SPEED-10);
+				navigator.rotateCounterClockWise(ROTATION_SPEED);
 
 			fallingEdgeAngle2 = odometer.getTheta();
 
@@ -222,22 +224,6 @@ public class USLocalizer {
 		navigator.turnTo(Math.toRadians(180));
 		odometer.setX(getFilteredData(11) - TILE_SIZE + us_SensorDistanceFromOrigin);
 
-	}
-
-	private float getFilteredData() {
-
-		usSensor.fetchSample(usData, 0);
-
-		if(usData[0]> usSensorMaxDistance)
-			usData[0] = usSensorMaxDistance;
-
-		float distance =  usData[0]*100;
-
-		if(distance > usSensorMaxDistance)
-			distance = usSensorMaxDistance;
-
-		LCD.drawString("Distance: "+distance, 0, 4);
-		return distance;
 	}
 
 	/*
