@@ -14,6 +14,7 @@ public class LightLocalizer {
 	private Odometer 			odometer;
 	private SampleProvider 		colorSensor;
 	private float[] 			colorData;	
+	private final double[]		calibrationCoordinates = {-3,-3};
 	private Navigator 			navigator;
 
 
@@ -33,7 +34,7 @@ public class LightLocalizer {
 
 		double blackLineAngles[] = new double[4];
 
-		navigator.travelTo(-5, -5);
+		navigator.travelTo(calibrationCoordinates[0],calibrationCoordinates[1]);
 		navigator.turnTo(Math.PI/2, ROTATION_SPEED * 2);
 
 		for( int index = 0 ; index < blackLineAngles.length; index ++)
@@ -79,7 +80,7 @@ public class LightLocalizer {
 	{
 		navigator.turnTo(0);
 		while(odometer.getTheta() <= Math.toRadians(20) && !blackLineDetected())
-			navigator.rotateCounterClockWise(10);
+			navigator.rotateCounterClockWise(15);
 
 		if(blackLineDetected()){
 			Sound.beep();
