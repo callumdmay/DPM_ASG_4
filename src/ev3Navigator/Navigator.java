@@ -19,15 +19,16 @@ public class Navigator extends Thread{
 	private final double locationError = 1;
 	private final double navigatingAngleError = 1;
 
-	private final int FORWARD_SPEED = 250;
-	private final int ROTATE_SPEED = 150;
+	private final int FORWARD_SPEED = 200;
+	private final int ROTATE_SPEED = 100;
+	private final int SMALL_CORRECTION_SPEED =20;
 
 	private Odometer odometer;
 
 	private NavigatorObstacleAvoider obstacleAvoider;
-	
+
 	private boolean isCheckingForObstacles;
-	
+
 	public static int coordinateCount = 0;
 	private static Queue<Coordinate> coordinates;
 
@@ -41,11 +42,11 @@ public class Navigator extends Thread{
 		neckMotor 					= pNeckMotor;
 		wheelRadius 				= pWheelRadius;
 		axleLength 					= pAxleLength;
-		
+
 		isCheckingForObstacles = true;
 		obstacleAvoider = new NavigatorObstacleAvoider(pOdometer, pUltraSonicPoller, pwallFollowerController, pLeftMotor, 
 				pRightMotor, pNeckMotor, pWheelRadius,pAxleLength );
-	
+
 	}
 
 	public Navigator(Odometer pOdometer, EV3LargeRegulatedMotor pLeftMotor, EV3LargeRegulatedMotor pRightMotor, double pWheelRadius, double pAxleLength)
@@ -56,7 +57,7 @@ public class Navigator extends Thread{
 		neckMotor 					= null;
 		wheelRadius 				= pWheelRadius;
 		axleLength 					= pAxleLength;
-		
+
 		isCheckingForObstacles = false;
 	}
 
@@ -68,8 +69,8 @@ public class Navigator extends Thread{
 		//For each coordinate in the queue, 
 		for( Coordinate coordinate : coordinates)
 			travelTo(coordinate.getX(), coordinate.getY());
-		
-		
+
+
 		resetMotors();
 	}
 
@@ -108,9 +109,18 @@ public class Navigator extends Thread{
 		if(deltaTheta > 2*Math.PI)
 			rotationAngle = deltaTheta - 2*Math.PI;
 
-
-		leftMotor.setSpeed(ROTATE_SPEED);
-		rightMotor.setSpeed(ROTATE_SPEED);
+		//Basic proportional control on turning speed when
+		//making a small angle correction
+		if(Math.abs(deltaTheta)<= Math.toRadians(10))
+		{
+			leftMotor.setSpeed(SMALL_CORRECTION_SPEED);
+			rightMotor.setSpeed(SMALL_CORRECTION_SPEED);
+		}
+		else
+		{
+			leftMotor.setSpeed(ROTATE_SPEED);
+			rightMotor.setSpeed(ROTATE_SPEED);
+		}
 
 		leftMotor.rotate(-NavigatorUtility.convertAngle(wheelRadius, axleLength, rotationAngle * 180/Math.PI), true);
 		rightMotor.rotate(NavigatorUtility.convertAngle(wheelRadius, axleLength, rotationAngle * 180/Math.PI), false);
@@ -158,8 +168,18 @@ public class Navigator extends Thread{
 			turnTo(newAngle);
 		else
 		{
-			leftMotor.setSpeed(FORWARD_SPEED);
-			rightMotor.setSpeed(FORWARD_SPEED);
+			//Basic proportional control, when the robot gets close to 
+			//required coordinates, slow down 
+			if(Math.abs(pX - currentX) <= 3 || Math.abs(pY - currentY ) <= 3)
+			{
+				leftMotor.setSpeed(SMALL_CORRECTION_SPEED);
+				rightMotor.setSpeed(SMALL_CORRECTION_SPEED);
+			}
+			else
+			{
+				leftMotor.setSpeed(FORWARD_SPEED);
+				rightMotor.setSpeed(FORWARD_SPEED);
+			}
 			leftMotor.forward();
 			rightMotor.forward();
 		}
@@ -192,7 +212,7 @@ public class Navigator extends Thread{
 		leftMotor.stop();
 		rightMotor.stop();
 	}
-	
+
 	public void rotateClockWise(int speed)
 	{
 		leftMotor.setSpeed(speed);
